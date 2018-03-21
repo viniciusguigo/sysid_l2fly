@@ -1,0 +1,16 @@
+name: sysid
+dependencies:
+    - python==3.5.2
+    - numpy
+    - scipy
+    - h5py
+    - matplotlib
+    - scikit-learn
+    - pip:
+        - nose2
+        - pyyaml
+        - tensorflow
+        - git+https://github.com/tflearn/tflearn.git
+        - git+https://github.com/Theano/Theano.git@adfe319ce6b781083d8dc3200fb4481b00853791#egg=Theano
+        - git+https://github.com/fchollet/keras
+        - git+https://github.com/openai/gym.git
