@@ -1,4 +1,4 @@
-name: sysid
+name: sysid_l2fly
 dependencies:
     - python==3.5.2
     - numpy
