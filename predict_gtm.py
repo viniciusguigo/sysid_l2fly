@@ -243,11 +243,11 @@ class SysidModel():
         """
         # save model to JSON
         model_json = model.to_json()
-        with open(name+".json", "w") as json_file:
+        with open('models/'+name+".json", "w") as json_file:
             json_file.write(model_json)
 
         # save weights to HDF5
-        model.save_weights(name+".h5")
+        model.save_weights('models/'+name+".h5")
         print("Saved model named "+name+" to disk")
 
     def load_model(self, name):
@@ -272,13 +272,6 @@ class SysidModel():
         """
         Plotting train, test, and loss results.
         """
-        ## =====================
-        # load stylesheet
-        try:
-            plt.style.use("dwplot")
-        except:
-            print("Cannot use this stylesheet")
-
         # labels
         data_label1 = 'p [deg/s]'
         data_label2 = 'q [deg/s]'
@@ -406,14 +399,14 @@ class SysidModel():
         # load the dataset
         # dataset_s = np.loadtxt("../data/Smoothed_Data/out_latD_smooth_all.csv",
         #                        delimiter=",")
-        dataset_s = np.loadtxt("../data/gtm/angular_velocity.csv",
+        dataset_s = np.loadtxt("data/gtm/angular_velocity_test.csv",
                                delimiter=",")
         s = dataset_s[:, 1:4]
 
         #dataset_a2 = np.loadtxt("../data/data_in_test.csv", delimiter=",")
         # dataset_a = np.loadtxt("../data/Smoothed_Data/in_latD_smooth_all.csv",
         #                        delimiter=",")
-        dataset_a = np.loadtxt("../data/gtm/doublet_sent.csv",
+        dataset_a = np.loadtxt("data/gtm/doublet_sent_test.csv",
                                delimiter=",")
         a = dataset_a[:, 0:3]
 
@@ -442,11 +435,11 @@ class SysidModel():
         # testing more data
         # load the dataset
         #dataset_s2 = np.loadtxt("../data/data_out_test.csv", delimiter=",")
-        dataset_s2 = np.loadtxt("../data/gtm/angular_velocity_test.csv",
+        dataset_s2 = np.loadtxt("data/gtm/angular_velocity_test2.csv",
                                 delimiter=",")
         s2 = dataset_s2[:, 1:4]
 
-        dataset_a2 = np.loadtxt("../data/gtm/doublet_sent_test.csv",
+        dataset_a2 = np.loadtxt("data/gtm/doublet_sent_test2.csv",
                                 delimiter=",")
         a2 = dataset_a2[:, 0:3]
 
