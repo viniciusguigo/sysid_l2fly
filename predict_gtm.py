@@ -152,14 +152,14 @@ class SysidModel():
         # model.add(Dropout(0.2, input_shape=(input_dim,))) # dropout on visible layer (20%)
         model.add(Dense(220,
                         input_shape=(input_dim, ),
-                        init='normal',
+                        kernel_initializer='normal',
                         activation='relu'))
         # model.add(Dropout(0.2))
-        model.add(Dense(160, init='normal', activation='relu'))
+        model.add(Dense(160, kernel_initializer='normal', activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(130, init='normal', activation='relu'))
+        model.add(Dense(130, kernel_initializer='normal', activation='relu'))
         model.add(Dropout(0.2))
-        model.add(Dense(output_dim, init='normal', activation='linear'))
+        model.add(Dense(output_dim, kernel_initializer='normal', activation='linear'))
 
         # compile model
         model.compile(loss=self.loss, optimizer=self.opt)
@@ -167,7 +167,7 @@ class SysidModel():
         # fit the model
         history = model.fit(X,
                             Y,
-                            nb_epoch=nb_epoch,
+                            epochs=nb_epoch,
                             batch_size=batch_size,
                             verbose=verbose)
 
@@ -382,12 +382,12 @@ class SysidModel():
                          'MSE = %.4f' % mse2[col],
                          weight='medium')
 
-        # save plots
-        fig0.savefig('./results/training.eps',dpi=600,transparent=True)
-        fig1.savefig('./results/loss.eps',dpi=600,transparent=True)
-        fig2.savefig('./results/testing.eps',dpi=600,transparent=True)
+        # # save plots
+        # fig0.savefig('./results/training.eps',dpi=600,transparent=True)
+        # fig1.savefig('./results/loss.eps',dpi=600,transparent=True)
+        # fig2.savefig('./results/testing.eps',dpi=600,transparent=True)
 
-        # plt.show()
+        plt.show()
 
     def fit_model(self):
         """
@@ -401,14 +401,16 @@ class SysidModel():
         #                        delimiter=",")
         dataset_s = np.loadtxt("data/gtm/angular_velocity_test.csv",
                                delimiter=",")
-        s = dataset_s[:, 1:4]
+        # s = dataset_s[:, 1:4]
+        s = dataset_s[:, :]
 
         #dataset_a2 = np.loadtxt("../data/data_in_test.csv", delimiter=",")
         # dataset_a = np.loadtxt("../data/Smoothed_Data/in_latD_smooth_all.csv",
         #                        delimiter=",")
         dataset_a = np.loadtxt("data/gtm/doublet_sent_test.csv",
                                delimiter=",")
-        a = dataset_a[:, 0:3]
+        # a = dataset_a[:, 0:3]
+        a = dataset_a[:, :]
 
         # convert dataset to matrix with n steps looking back
         s0, a0, s1 = self.data_to_matrix(s, a)
@@ -437,11 +439,13 @@ class SysidModel():
         #dataset_s2 = np.loadtxt("../data/data_out_test.csv", delimiter=",")
         dataset_s2 = np.loadtxt("data/gtm/angular_velocity_test2.csv",
                                 delimiter=",")
-        s2 = dataset_s2[:, 1:4]
+        # s2 = dataset_s2[:, 1:4]
+        s2 = dataset_s2[:, :]
 
         dataset_a2 = np.loadtxt("data/gtm/doublet_sent_test2.csv",
                                 delimiter=",")
-        a2 = dataset_a2[:, 0:3]
+        # a2 = dataset_a2[:, 0:3]
+        a2 = dataset_a2[:, :]
 
         # validate model
         Y2, Y2_pred = self.validate_model(s2, a2, n, model)
