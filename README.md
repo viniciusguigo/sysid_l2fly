@@ -1,6 +1,18 @@
 # sysid_l2fly
 System Identification, Modeling, and Control of Linear and Nonlinear Systems
 
+## Usage
+main.py:  
+This file loads a previously trained model (saved inside 'models' folder) and a tries to control the plant using a modified version of iLQR controller.
+
+
+**NOTE: ** The files below needs to be revised.
+predict_gtm.py:  
+Loads previously collected data from NASA GTM Matlab sim and uses deep learning to predict model dynamics. It uses 4 states (beta, p, q, phi) and 2 controls (?).
+
+predict_gtm_full.py:  
+Loads previously collected data from NASA GTM Matlab sim and uses deep learning to predict model dynamics. It uses 12 states (beta, p, q, phi) and (?) controls (?).
+
 ## Installation
 
 All the packages and dependencies are being managed using Anaconda3.
