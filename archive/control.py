@@ -19,7 +19,7 @@ from keras.layers import Dropout
 from keras.optimizers import SGD
 from keras.layers import LSTM
 
-from predict import SysidModel
+from predict_gtm import SysidModel
 
 
 class Neural_iLQR():
