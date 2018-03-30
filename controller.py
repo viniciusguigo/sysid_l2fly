@@ -29,16 +29,35 @@ class TestController(object):
         """
         control = self.action_space.sample()
         return control
-        
+
 
 if __name__ == '__main__':
     """ Testing controller on a simple OpenAI Gym environment: Pendulum-v1
 
-    More info : https://gym.openai.com/envs/Pendulum-v0/
+    More info : https://github.com/openai/gym/wiki/Pendulum-v0
+
+    Summary:
+
+    States [low_bound, high_bound]:
+    =================================
+    x0 = cos(theta) [-1.0, 1.0]
+    x1 = sin(theta) [-1.0, 1.0]
+    x2 = theta dot  [-8.0, 8.0]
+
+    Initial States
+    =================================
+    Random angle from -pi to pi, and random velocity between -1 and 1
+
+    Controls [low_bound, high_bound]:
+    =================================
+    u0 = torque [-2.0, 2.0]
+
 
     TODO:
+    =================================
     Create a class to handle different plants (environments) or
     to run this loop (class to manage experiments).
+
     """
     # create environment (plant)
     ENV_NAME = 'Pendulum-v0'
@@ -51,7 +70,7 @@ if __name__ == '__main__':
     agent = TestController(env)
 
     # general simulation parameters
-    n_episodes = 1
+    n_episodes = 2
     n_steps = 100
     done = False
 
