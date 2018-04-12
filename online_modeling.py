@@ -6,23 +6,25 @@ Online modeling using deep neural networks.
 # VERSION UPDATES
 0.0.2 (Apr/02/2018) : added validation set inside memory buffer class so model
                       can be  evaluated using unseen data.
+0.0.3 (Apr/12/2018) : enabled model comparison method (mostly between initial
+                      and final model generated)
 
 """
 __author__ = "Vinicius G. Goecks"
-__version__ = "0.0.2"
-__date__ = "April 02, 2018"
+__version__ = "0.0.3"
+__date__ = "April 12, 2018"
 
 # import
 import numpy as np
 import matplotlib.pyplot as plt
 
 import argparse
-import sys
+import sys, os
 import time
 import threading
 import gym
 
-from keras.models import Sequential
+from keras.models import Sequential, load_model
 from keras.layers import Dense, Dropout, LSTM
 from keras.optimizers import SGD
 
@@ -65,10 +67,10 @@ class MemoryBuffer(object):
         self.val_data_size = val_data_size
 
         # create buffer
-        n_states = env.observation_space.shape[0]
-        n_controls = env.action_space.shape[0]
-        self.n_inputs = n_states + n_controls
-        self.n_outputs = n_states
+        self.n_states = env.observation_space.shape[0]
+        self.n_controls = env.action_space.shape[0]
+        self.n_inputs = self.n_states + self.n_controls
+        self.n_outputs = self.n_states
 
         self.buffer = np.zeros(self.buffer_size,
                                dtype=[('data_in', np.float32,
@@ -224,7 +226,7 @@ class ThreadingModeling(object):
 
         # save model internally and dump on file
         self.model = model
-        self.model.save('./models/' + self.run_id + '_init.h5')
+        self.model.save('./experiments/' + self.run_id + '/initial_model.h5')
 
     def __update_model(self):
         """ Receive new batch of data and update model.
@@ -268,6 +270,77 @@ class ThreadingModeling(object):
                 if time_compute < self.update_model_dt:
                     # computed too fast, way a bit to follow dt
                     time.sleep(self.update_model_dt - time_compute)
+
+    def compare_models(self):
+        """After training, load different models and plot time history
+        of their predictions so one can visually compare them.
+        """
+        # list models
+        model_names = ['/initial_model.h5', '/final_model.h5']
+
+        # prepare validation data
+        val_input = self.memory.val_data['data_in']
+        val_states = val_input[:,0:self.memory.n_states]
+        val_controls = val_input[:,-self.memory.n_controls]
+        n_steps = self.memory.val_data_size
+
+        # make sure arrays have same structure
+        val_states = val_states.reshape(n_steps, self.memory.n_states)
+        val_controls = val_controls.reshape(n_steps, self.memory.n_controls)
+
+        # MAIN LOOP
+        for i in range(len(model_names)):
+            # load model
+            model = load_model('./experiments/' + self.run_id + model_names[i])
+            pred_states = np.zeros((n_steps, self.memory.n_states))
+
+            # step-by-step prediction (using validation data)
+            current_state = val_states[0,:]
+            control = val_controls[0,:]
+
+            # store data
+            pred_states[0,:] = current_state
+
+            for j in range(1,n_steps):
+
+                # predict next states
+                # format input data and predict different in next states
+                input_data = np.hstack((current_state, control))
+                delta_next_state = model.predict(input_data.reshape(
+                    1, self.memory.n_inputs))
+
+                # return next states
+                next_state = current_state + delta_next_state[0]
+
+                # update states and controls
+                current_state = next_state
+                control = val_controls[j,:]
+
+                # store data
+                pred_states[j,:] = current_state
+
+            # plot predicted data            
+            plt.figure()
+            
+            # plot states
+            for l in range(self.memory.n_states):
+                plt.subplot(self.memory.n_states+1, 1, l+1)
+                if l == 0:
+                    plt.title('Model comparison: {}'.format(model_names[i]))
+
+                plt.plot(val_states[:, l], '-', label='x{}'.format(l))
+                plt.plot(pred_states[:, l], '--', label='pred_x{}'.format(l))
+                plt.grid()
+                plt.legend(loc='best')
+
+            # plot controls
+            plt.subplot(self.memory.n_states+1, 1, self.memory.n_states+1)
+            for m in range(n_controls):
+                plt.plot(val_controls[:, m], label='u{}'.format(m))
+
+            plt.grid()
+            plt.legend(loc='best')
+
 
 
     def predict_next_states(self, current_state, control):
@@ -319,8 +392,11 @@ if __name__ == '__main__':
     """
     PLOTTING = True
 
+    # define experiment id and create folder to store results
+    run_id = 'sysid_2018_apr12_10k_steps'
+    os.system('mkdir ./experiments/{}'.format(run_id))
+
     # create environment (plant)
-    run_id = 'test2'
     ENV_NAME = 'Pendulum-v0'
     env = gym.make(ENV_NAME)
     n_states = env.observation_space.shape[0]
@@ -330,7 +406,7 @@ if __name__ == '__main__':
     agent = TestController(env)
 
     # starts modeling in the background with memory buffer
-    memory = MemoryBuffer(env, buffer_size=100, val_data_size=100)
+    memory = MemoryBuffer(env, buffer_size=1000, val_data_size=300)
     modeling = ThreadingModeling(memory_buffer=memory,
                                  batch_size=16,
                                  update_model_dt=0.5,
@@ -338,7 +414,7 @@ if __name__ == '__main__':
 
     # general simulation parameters
     n_episodes = 1
-    n_steps = 100000
+    n_steps = 10000
     sim_dt = .02
 
     # store states (current and predicted) and actions
@@ -394,14 +470,14 @@ if __name__ == '__main__':
                 # computed too fast, way a bit to follow dt
                 time.sleep(sim_dt - time_compute)
 
-    # close everything
+    # close everything and stop modeling
     env.close()
     modeling.close()
 
     # save last model and data
-    modeling.model.save('./models/' + modeling.run_id + '_last.h5')
+    modeling.model.save('./experiments/' + modeling.run_id + '/final_model.h5')
     hist_train = np.array(modeling.hist_train)
-    np.save('./models/' + run_id + '_hist.npy', hist_train)
+    np.save('./experiments/' + run_id + '/model_hist.npy', hist_train)
 
     # plot results (cycle for different episodes)
     if PLOTTING:
@@ -446,6 +522,9 @@ if __name__ == '__main__':
 
             plt.grid()
             plt.legend(loc='best')
+
+        # compare different models used during simulation
+        modeling.compare_models()
 
         # show or save plot
         plt.show()
