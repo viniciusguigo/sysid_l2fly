@@ -47,6 +47,8 @@ class ThreadingModeling(object):
         self.update_model_dt = update_model_dt  # how often should be model
         # be updated (sec) (assuming we
         #  have CPU power for that)
+
+        # initiate tensorflow session and model
         self.__init_model()
 
         # run model updates in the background forever
@@ -58,17 +60,15 @@ class ThreadingModeling(object):
 
     def __init_model(self):
         """ Initialize pre-defined model.
-        """
-        print('[*] Initializing model...')
+
+        # OLD KERAS MODEL
         model = Sequential()
 
-        # model.add(Dropout(0.2, input_shape=(input_dim,)))
         model.add(Dense(220,
                         input_shape=(self.memory.n_inputs,),
                         kernel_initializer='normal',
                         activation='relu'))
 
-        # model.add(Dropout(0.2))
         model.add(Dense(160, kernel_initializer='normal', activation='relu'))
         model.add(Dropout(0.2))
         model.add(Dense(130, kernel_initializer='normal', activation='relu'))
@@ -82,6 +82,63 @@ class ThreadingModeling(object):
         # save model internally and dump on file
         self.model = model
         self.model.save('./experiments/' + self.run_id + '/initial_model.h5')
+        """
+        self.sess = tf.Session()
+        print('[*] Initializing model...')
+
+        # define inputs        
+        input_layer = tf.placeholder(shape=[None, self.memory.n_inputs],
+                                     dtype=np.float32)
+        output_label = tf.placeholder(shape=[None,self.memory.n_states],
+                                     dtype=np.float32)
+
+        # replicate old keras model (function description)
+        # define layers
+        dense1 = tf.layers.dense(inputs=input_layer,
+                                 units=220, activation=tf.nn.relu,
+                                 kernel_initializer=tf.initializers.random_normal)
+        
+        dense2 = tf.layers.dense(inputs=dense1,
+                                 units=160, activation=tf.nn.relu,
+                                 kernel_initializer=tf.initializers.random_normal)
+        dropout1 = tf.layers.dropout(inputs=dense2, rate=0.2)
+
+        dense3 = tf.layers.dense(inputs=dropout1,
+                                 units=220, activation=tf.nn.relu,
+                                 kernel_initializer=tf.initializers.random_normal)
+        dropout2 = tf.layers.dropout(inputs=dense3, rate=0.2)
+
+        output_layer = tf.layers.dense(inputs=dropout2,
+                                 units=self.memory.n_outputs,
+                                 kernel_initializer=tf.initializers.random_normal)
+
+        # define loss and optimizer
+        with tf.name_scope('loss'):
+            loss = tf.reduce_mean((output_layer - output_label)**2)
+            tf.summary.scalar('loss', loss)
+
+        optimizer = tf.train.AdamOptimizer(learning_rate=0.001)
+        train_op = optimizer.minimize(loss)
+
+        # initialize vars
+        self.sess.run(tf.global_variables_initializer())
+
+        # run graph
+        merged_summary_op = tf.summary.merge_all()
+        writer = tf.summary.FileWriter('./experiments/' + self.run_id, self.sess.graph)
+
+        # # test run
+        # for i in range(1000):
+        #     random_input = np.random.rand(1,self.memory.n_inputs)
+        #     random_label = np.random.rand(1,self.memory.n_states)
+        #     summary, _ = self.sess.run([merged_summary_op,train_op],
+        #                         feed_dict={input_layer: random_input,
+        #                                    output_label: random_label})
+        #     writer.add_summary(summary, i)
+
+
+        print('[*] Model initialized.')
+
 
     def __update_model(self):
         """ Receive new batch of data and update model.
