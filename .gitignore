@@ -11,3 +11,6 @@ __pycache__/
 
 # TensorFlow event logs
 *.tfevents.*
+
+# Data folder
+learning_mpc/data/*
